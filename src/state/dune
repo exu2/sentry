@@ -1,0 +1,5 @@
+(library
+ (name sentry_state)
+ (libraries core async cryptokit)
+ (preprocess (pps ppx_jane))
+)
