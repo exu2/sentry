@@ -37,10 +37,14 @@ let remove_password_entry_v1 t
 let get_password_entry_v1 t
     { Sentry_rpcs.Entry_info.user; master_password; entry; entry_password = _ }
     =
+  let open Deferred.Or_error.Let_syntax in
   let hashed_master_password = Cryptography.hash master_password in
   let state = Tlog.read_state t.tlog_service in
-  State.lookup_password state ~user ~hashed_master_password ~entry
-  |> Deferred.return
+  let%map encrypted_password =
+    State.lookup_password state ~user ~hashed_master_password ~entry
+    |> Deferred.return
+  in
+  Cryptography.decrypt ~key:master_password ~data:encrypted_password
 
 let implementations =
   let implementations =
