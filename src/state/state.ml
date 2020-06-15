@@ -64,12 +64,14 @@ let apply_update t update =
             Map.set t ~key:user ~data:(Data.init ~hashed_master_password)
           in
           (t, Ok ()) )
-  | Update.Remove_user user -> (
-      match Map.mem t user with
-      | true ->
-          let t = Map.remove t user in
-          (t, Ok ())
-      | false -> (t, no_user_error ~user) )
+  | Update.Remove_user { user; hashed_master_password } -> (
+      match Map.find t user with
+      | Some data ->
+          if Data.validate_password data hashed_master_password then
+            let t = Map.remove t user in
+            (t, Ok ())
+          else (t, Or_error.errorf !"Invalid password")
+      | None -> (t, no_user_error ~user) )
   | Add_entry { user; hashed_master_password; entry; encrypted_password } -> (
       match Map.find t user with
       | None -> (t, no_user_error ~user)

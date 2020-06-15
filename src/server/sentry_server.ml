@@ -7,14 +7,51 @@ type t = { tlog_service : Tlog.Service.t }
 
 let create ~rundir = { tlog_service = Tlog.Service.create ~rundir }
 
-let add_user_v1 t { Sentry_rpcs.User_and_password.user; password } =
-  let hashed_master_password = Cryptography.hash password in
+let add_user_v1 t { Sentry_rpcs.User_and_password.user; master_password } =
+  let hashed_master_password = Cryptography.hash master_password in
   Tlog.write_update t.tlog_service
     (Update.Add_user { user; hashed_master_password })
 
+let remove_user_v1 t { Sentry_rpcs.User_and_password.user; master_password } =
+  let hashed_master_password = Cryptography.hash master_password in
+  Tlog.write_update t.tlog_service
+    (Update.Remove_user { user; hashed_master_password })
+
+let add_password_entry_v1 t
+    { Sentry_rpcs.Entry_info.user; master_password; entry; entry_password } =
+  let hashed_master_password = Cryptography.hash master_password in
+  let encrypted_password =
+    Cryptography.encrypt ~key:master_password ~data:entry_password
+  in
+  Tlog.write_update t.tlog_service
+    (Update.Add_entry
+       { user; hashed_master_password; entry; encrypted_password })
+
+let remove_password_entry_v1 t
+    { Sentry_rpcs.Entry_info.user; master_password; entry; entry_password = _ }
+    =
+  let hashed_master_password = Cryptography.hash master_password in
+  Tlog.write_update t.tlog_service
+    (Update.Remove_entry { user; hashed_master_password; entry })
+
+let get_password_entry_v1 t
+    { Sentry_rpcs.Entry_info.user; master_password; entry; entry_password = _ }
+    =
+  let hashed_master_password = Cryptography.hash master_password in
+  let state = Tlog.read_state t.tlog_service in
+  State.lookup_password state ~user ~hashed_master_password ~entry
+  |> Deferred.return
+
 let implementations =
   let implementations =
-    [ Rpc.Rpc.implement Sentry_rpcs.add_user_v1 add_user_v1 ]
+    [
+      Rpc.Rpc.implement Sentry_rpcs.add_user_v1 add_user_v1;
+      Rpc.Rpc.implement Sentry_rpcs.remove_user_v1 remove_user_v1;
+      Rpc.Rpc.implement Sentry_rpcs.add_password_entry_v1 add_password_entry_v1;
+      Rpc.Rpc.implement Sentry_rpcs.remove_password_entry_v1
+        remove_password_entry_v1;
+      Rpc.Rpc.implement Sentry_rpcs.get_password_entry_v1 get_password_entry_v1;
+    ]
   in
   Rpc.Implementations.create_exn ~implementations
     ~on_unknown_rpc:`Close_connection

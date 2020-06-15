@@ -3,7 +3,7 @@ open! Async
 
 type t =
   | Add_user of { user : string; hashed_master_password : string }
-  | Remove_user of string
+  | Remove_user of { user : string; hashed_master_password : string }
   | Add_entry of {
       user : string;
       hashed_master_password : string;
