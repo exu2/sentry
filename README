@@ -11,6 +11,6 @@ Password management software solves the problem pretty nicely, but it becomes di
 are away from your normal computer, or if you have multiple computers yourself. You won't have access
 to passwords stored on another machine. 
 
-To solve this, Sentry is a lightweight password server that can be easily used anywhere (with internet
+To solve this, Sentry is a lightweight password server that can be easily accessed anywhere (with internet
 access). Your master password is hashed before stored, and all other passwords are stored using AES that
 can only be unlocked by your master key.
