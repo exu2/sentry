@@ -1,6 +1,7 @@
 EXCLUDE_QUERY_DIR
 B /Users/ethan/.opam/default/lib/async
 B /Users/ethan/.opam/default/lib/async_extra
+B /Users/ethan/.opam/default/lib/async_interactive
 B /Users/ethan/.opam/default/lib/async_kernel
 B /Users/ethan/.opam/default/lib/async_kernel/persistent_connection_kernel
 B /Users/ethan/.opam/default/lib/async_rpc_kernel
@@ -59,6 +60,7 @@ B /Users/ethan/.opam/default/lib/zarith
 B ../../../_build/default/sentry/src/lib/.sentry_lib.objs/byte
 S /Users/ethan/.opam/default/lib/async
 S /Users/ethan/.opam/default/lib/async_extra
+S /Users/ethan/.opam/default/lib/async_interactive
 S /Users/ethan/.opam/default/lib/async_kernel
 S /Users/ethan/.opam/default/lib/async_kernel/persistent_connection_kernel
 S /Users/ethan/.opam/default/lib/async_rpc_kernel

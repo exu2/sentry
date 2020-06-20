@@ -1,5 +1,5 @@
 (library
  (name sentry_commander)
- (libraries core async async_interactive sentry_rpcs sentry_lib)
+ (libraries core async async_interactive sentry_rpcs sentry_lib sentry_server_connection)
  (preprocess (pps ppx_jane))
 )

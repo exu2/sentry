@@ -1,5 +1,5 @@
 (library
  (name sentry_lib)
- (libraries core async cryptokit sha)
+ (libraries core async cryptokit sha async_interactive)
  (preprocess (pps ppx_jane))
 )
