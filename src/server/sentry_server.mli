@@ -1,4 +1,6 @@
 open! Core
 open! Async
 
-val command : Command.t
+val start_command : Command.t
+
+val init_command : Command.t

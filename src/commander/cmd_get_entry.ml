@@ -3,7 +3,7 @@ open! Async
 open Sentry_lib
 
 let command =
-  Command.async ~summary:""
+  Command.async_or_error ~summary:""
     (let open Command.Let_syntax in
     let%map_open () = return () in
     fun () ->
@@ -16,7 +16,7 @@ let command =
         Interactive.ask_user
           "Enter the name of the password entry you'd like to access:"
       in
-      let%map entry_password =
+      let%map.Deferred.Or_error.Let_syntax entry_password =
         Sentry_server_connection.with_close ~f:(fun connection ->
             Rpc.Rpc.dispatch_exn Sentry_rpcs.get_password_entry_v1 connection
               {
@@ -25,6 +25,5 @@ let command =
                 entry;
                 entry_password = "";
               })
-        >>| ok_exn
       in
       print_endline entry_password)

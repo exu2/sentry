@@ -60,7 +60,7 @@ let implementations =
   Rpc.Implementations.create_exn ~implementations
     ~on_unknown_rpc:`Close_connection
 
-let command =
+let start_command =
   Command.async ~summary:"Sentry server"
     (let open Command.Let_syntax in
     let%map_open () = return ()
@@ -80,3 +80,16 @@ let command =
               ~on_handshake_error:`Ignore)
       in
       Deferred.never ())
+
+let init_command =
+  Command.async ~summary:"Initialize tlog state"
+    (let open Command.Let_syntax in
+    let%map_open () = return ()
+    and rundir =
+      flag "rundir" (required string) ~doc:"(* TODO: make a default for this *)"
+    in
+    fun () ->
+      let open Deferred.Let_syntax in
+      let tlog_service = Tlog.Service.create ~rundir in
+      let%bind () = Tlog.Service.init tlog_service in
+      Deferred.unit)

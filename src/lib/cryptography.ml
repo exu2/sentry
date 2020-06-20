@@ -2,6 +2,7 @@ open! Core
 open! Async
 open! Import
 
+(* TODO: This needs fixing *)
 let cipher ~direction ~key ~data =
   let transform = Cipher.aes key direction in
   transform#put_string data;
