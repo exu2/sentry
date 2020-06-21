@@ -45,3 +45,24 @@ let random_string ?must_include_numbers ?must_include_uppercase_letters
   let excluding_indices = Int.Hash_set.create () in
   List.fold rand_int_generators ~init:string ~f:(fun string rand_int ->
       substitute_one_random_character string ~rand_int ~excluding_indices)
+
+let%expect_test "test ascii ranges are correct" =
+  let print_ascii_chars ~lower ~upper =
+    List.map
+      (List.range lower (upper + 1))
+      ~f:(fun ascii_number -> Char.of_int_exn ascii_number |> String.of_char)
+    |> String.concat ~sep:"," |> print_string
+  in
+  print_ascii_chars ~lower:33 ~upper:122;
+  let%bind () =
+    [%expect
+      {| !,",#,$,%,&,',(,),*,+,,,-,.,/,0,1,2,3,4,5,6,7,8,9,:,;,<,=,>,?,@,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,[,\,],^,_,`,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z |}]
+  in
+  print_ascii_chars ~lower:48 ~upper:57;
+  let%bind () = [%expect {| 0,1,2,3,4,5,6,7,8,9 |}] in
+  print_ascii_chars ~lower:97 ~upper:122;
+  let%bind () =
+    [%expect {| a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z |}]
+  in
+  print_ascii_chars ~lower:65 ~upper:90;
+  [%expect {| A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z |}]

@@ -1,0 +1,6 @@
+(library
+ (name sentry_test)
+ (libraries core async async_interactive sentry_rpcs sentry_lib sentry_server_connection)
+ (preprocess (pps ppx_jane ppx_inline_test))
+ (inline_tests)
+)
