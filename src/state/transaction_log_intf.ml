@@ -7,6 +7,8 @@ module type Transaction_log_state = sig
 
   val create : unit -> t
 
+  val rundir : string
+
   module Update : sig
     type t
   end
@@ -25,7 +27,7 @@ module type Transaction_log = sig
     module Service : sig
       type t
 
-      val create : rundir:string -> t
+      val create : unit -> t
 
       val init : t -> unit Deferred.t
     end

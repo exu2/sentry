@@ -2,21 +2,28 @@ open! Core
 open! Async
 open! Import
 
-let trim_or_pad string =
-  match String.length string with
-  | 32 -> string
-  | length when length < 32 ->
-      let pad_string =
-        List.map (List.range 0 (32 - length)) ~f:(fun _ -> " ")
-        |> String.concat ~sep:""
-      in
-      String.concat ~sep:"" [ string; pad_string ]
-  | _ -> String.sub ~pos:0 ~len:32 string
-
 let cipher ~direction ~key ~data =
-  (* TODO: just a hack to make it work. Need to be fixed *)
-  let key = trim_or_pad key in
-  let data = trim_or_pad data in
+  let block_size = 16 in
+  let next_fit length =
+    match length % block_size with
+    | 0 -> length
+    | _ -> length - (length % block_size) + block_size
+  in
+  let trim string =
+    let next_fit_length = next_fit (String.length string) in
+    match Int.equal (String.length string) next_fit_length with
+    | true -> string
+    | false ->
+        let pad_string =
+          List.map
+            (List.range 0 (next_fit_length - String.length string))
+            ~f:(fun _ -> " ")
+          |> String.concat ~sep:""
+        in
+        String.concat ~sep:"" [ string; pad_string ]
+  in
+  let key = trim key in
+  let data = trim data in
   let transform = Cipher.aes key direction in
   transform#put_string data;
   transform#finish;

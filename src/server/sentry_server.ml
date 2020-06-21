@@ -5,7 +5,7 @@ open Sentry_state
 
 type t = { tlog_service : Tlog.Service.t }
 
-let create ~rundir = { tlog_service = Tlog.Service.create ~rundir }
+let create () = { tlog_service = Tlog.Service.create () }
 
 let add_user_v1 t { Sentry_rpcs.User_and_password.user; master_password } =
   let hashed_master_password = Cryptography.hash master_password in
@@ -67,8 +67,6 @@ let start_command =
     and port =
       flag "port" (required int)
         ~doc:"PORT port number that the server will accept request in"
-    and rundir =
-      flag "rundir" (required string) ~doc:"(* TODO: make a default for this *)"
     in
     fun () ->
       let open Deferred.Let_syntax in
@@ -76,7 +74,7 @@ let start_command =
         Tcp.Server.create ~on_handler_error:`Ignore
           (Tcp.Where_to_listen.of_port port) (fun _ r w ->
             Rpc.Connection.server_with_close r w ~implementations
-              ~connection_state:(fun (_ : Rpc.Connection.t) -> create ~rundir)
+              ~connection_state:(fun (_ : Rpc.Connection.t) -> create ())
               ~on_handshake_error:`Ignore)
       in
       Deferred.never ())
@@ -84,12 +82,8 @@ let start_command =
 let init_command =
   Command.async ~summary:"Initialize tlog state"
     (let open Command.Let_syntax in
-    let%map_open () = return ()
-    and rundir =
-      flag "rundir" (required string) ~doc:"(* TODO: make a default for this *)"
-    in
+    let%map_open () = return () in
     fun () ->
       let open Deferred.Let_syntax in
-      let tlog_service = Tlog.Service.create ~rundir in
-      let%bind () = Tlog.Service.init tlog_service in
+      let%bind () = Tlog.Service.create () |> Tlog.Service.init in
       Deferred.unit)

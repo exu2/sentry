@@ -52,6 +52,8 @@ type t = Data.t String.Map.t [@@deriving sexp]
 
 let create () = String.Map.empty
 
+let rundir = "~/sentry"
+
 let no_user_error ~user = Or_error.errorf !"User doesn't exists: %s" user
 
 let apply_update t update =

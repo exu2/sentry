@@ -8,7 +8,7 @@ module Make (M : Transaction_log_state) = struct
   module Service = struct
     type t = string
 
-    let create ~rundir = rundir
+    let create () = M.rundir
 
     let init t =
       let state = M.create () in

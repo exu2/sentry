@@ -15,8 +15,8 @@ let command =
       let%bind entry =
         Interactive.ask_user "Enter the name of the entry you'd like to use:"
       in
-      (* TODO: randomly generate password *)
-      let entry_password = Random.int 1000000000 |> string_of_int in
+      (* TODO: randomly generate password based on restriction *)
+      let entry_password = Random.random_string ~length:32 in
       printf !"Here's your generated password: %s\n" entry_password;
       match%bind Async_interactive.ask_yn "Confirm?" with
       | false -> Deferred.Or_error.ok_unit
