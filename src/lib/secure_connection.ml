@@ -8,7 +8,6 @@ let make_secure_transport ?(private_key = Cryptography.Rsa.create ()) reader
   don't_wait_for
     (Pipe.write_if_open writer
        (sprintf !"%{Cryptography.Rsa.Public}" public_key));
-  (* Core.Printf.printf !"sending %{Cryptography.Rsa.Public}\n" public_key; *)
   let%bind.Deferred.Or_error.Let_syntax other_side_public_key =
     match%bind Pipe.read reader with
     | `Ok a -> Cryptography.Rsa.Public.of_string a |> Deferred.Or_error.return
@@ -16,23 +15,15 @@ let make_secure_transport ?(private_key = Cryptography.Rsa.create ()) reader
         Deferred.Or_error.errorf
           "Did not receive public key from the server side"
   in
-  (*  Core.Printf.printf
-    !"other public key: %{Cryptography.Rsa.Public}"
-    other_side_public_key; *)
-  ignore other_side_public_key;
   let reader =
     Pipe.map reader ~f:(fun str ->
         let str = Cryptography.Rsa.decrypt private_key str in
-        Core.Printf.printf !"Reading length (%d) %s\n%!" (String.length str) str;
         str)
   in
   let writer =
     let r, w = Pipe.create () in
     don't_wait_for
       (Pipe.transfer r writer ~f:(fun str ->
-           Core.Printf.printf
-             !"Writing length (%d): %s\n%!"
-             (String.length str) str;
            Cryptography.Rsa.encrypt other_side_public_key str));
     w
   in
