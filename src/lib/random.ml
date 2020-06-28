@@ -19,6 +19,7 @@ let random_string' ~length ~rand_int =
 
 let random_string ?must_include_numbers ?must_include_uppercase_letters
     ?must_include_lowercase_letters ~length () =
+  Random.self_init ();
   let open Or_error.Let_syntax in
   let string =
     random_string' ~length ~rand_int:(fun () -> Random.int_incl 33 122)

@@ -89,7 +89,6 @@ module Rsa = struct
     }
 
   let break_down str =
-    Core.Printf.printf !"String length %d\n%!" (String.length str);
     let rec loop chars =
       if List.length chars <= msg_size then
         [ String.of_char_list chars |> pad ~len:msg_size ]
