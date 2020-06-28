@@ -50,18 +50,28 @@ let command =
          Interactive.ask_user "Please type in your master password:"
        in
        let%bind entry =
-         Interactive.ask_user "Enter the name of the entry you'd like to use:"
+         Interactive.ask_user "Enter the name of the entry you'd like to add:"
        in
        let%bind.Deferred.Or_error.Let_syntax entry_password =
-         let bool_to_unit_option b = if b then Some () else None in
-         Random.random_string ~length:args.length
-           ?must_include_numbers:(bool_to_unit_option args.must_include_numbers)
-           ?must_include_uppercase_letters:
-             (bool_to_unit_option args.must_include_uppercase_letters)
-           ?must_include_lowercase_letters:
-             (bool_to_unit_option args.must_include_lowercase_letters)
-           ()
-         |> Deferred.return
+         match%bind
+           Async_interactive.ask_yn
+             "Do you want a randomly generated password for you?"
+         with
+         | false ->
+             Interactive.ask_user
+               (sprintf "Please enter your password for entry %s" entry)
+             |> Deferred.ok
+         | true ->
+             let bool_to_unit_option b = if b then Some () else None in
+             Random.random_string ~length:args.length
+               ?must_include_numbers:
+                 (bool_to_unit_option args.must_include_numbers)
+               ?must_include_uppercase_letters:
+                 (bool_to_unit_option args.must_include_uppercase_letters)
+               ?must_include_lowercase_letters:
+                 (bool_to_unit_option args.must_include_lowercase_letters)
+               ()
+             |> Deferred.return
        in
        printf !"Here's your generated password: %s\n" entry_password;
        match%bind Async_interactive.ask_yn "Confirm?" with
