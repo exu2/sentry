@@ -2,6 +2,13 @@ open! Core
 open! Async
 open! Import
 
+let pad ?(char = " ") string ~len =
+  let pad_string =
+    List.map (List.range 0 (len - String.length string)) ~f:(fun _ -> char)
+    |> String.concat ~sep:""
+  in
+  String.concat ~sep:"" [ string; pad_string ]
+
 module Aes = struct
   let cipher ~direction ~key ~data =
     let block_size = 16 in
@@ -14,14 +21,7 @@ module Aes = struct
       let next_fit_length = next_fit (String.length string) in
       match Int.equal (String.length string) next_fit_length with
       | true -> string
-      | false ->
-          let pad_string =
-            List.map
-              (List.range 0 (next_fit_length - String.length string))
-              ~f:(fun _ -> " ")
-            |> String.concat ~sep:""
-          in
-          String.concat ~sep:"" [ string; pad_string ]
+      | false -> pad string ~len:next_fit_length
     in
     let key = trim key in
     let data = trim data in
@@ -63,13 +63,17 @@ module Rsa = struct
     type nonrec t = [ `Private ] t
   end
 
+  let key_size = 2048
+
+  let msg_size = key_size / 8
+
   let from_rsa_key { RSA.size; n; e; d; p; q; dp; dq; qinv } =
     { size; n; e; d; p; q; dp; dq; qinv }
 
   let to_rsa_key { size; n; e; d; p; q; dp; dq; qinv } =
     { RSA.size; n; e; d; p; q; dp; dq; qinv }
 
-  let create () = RSA.new_key 2048 |> from_rsa_key
+  let create () = RSA.new_key key_size |> from_rsa_key
 
   let public_key t =
     {
@@ -84,7 +88,22 @@ module Rsa = struct
       qinv = "";
     }
 
-  let encrypt t = RSA.encrypt (to_rsa_key t)
+  let break_down str =
+    Core.Printf.printf !"String length %d\n%!" (String.length str);
+    let rec loop chars =
+      if List.length chars <= msg_size then
+        [ String.of_char_list chars |> pad ~len:msg_size ]
+      else
+        let lst1, lst2 = List.split_n chars msg_size in
+        let string1 = String.of_char_list lst1 |> pad ~len:msg_size in
+        string1 :: loop lst2
+    in
+    loop (String.to_list str)
 
-  let decrypt t = RSA.decrypt (to_rsa_key t)
+  let convert str ~f = break_down str |> List.map ~f |> String.concat ~sep:""
+
+  let encrypt t str = convert str ~f:(RSA.encrypt (to_rsa_key t))
+
+  let decrypt t str =
+    convert str ~f:(RSA.decrypt (to_rsa_key t)) |> String.strip
 end
