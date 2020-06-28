@@ -75,7 +75,7 @@ module Rsa = struct
     {
       size = t.size;
       n = t.n;
-      e = "";
+      e = t.e;
       d = "";
       p = "";
       q = "";
