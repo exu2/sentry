@@ -73,7 +73,9 @@ let command =
                ()
              |> Deferred.return
        in
-       printf !"Here's your generated password: %s\n" entry_password;
+       printf
+         !"Please confirm that you'd like to use this password for entry %s: %s\n"
+         entry entry_password;
        match%bind Async_interactive.ask_yn "Confirm?" with
        | false -> Deferred.Or_error.ok_unit
        | true ->

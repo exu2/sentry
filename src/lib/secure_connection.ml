@@ -1,11 +1,6 @@
 open! Core
 open! Async
 
-let string_to_ascii_codes str =
-  String.to_list str
-  |> List.map ~f:(fun char -> Char.to_int char |> Int.to_string)
-  |> String.concat ~sep:"-"
-
 let make_secure_transport ?(private_key = Cryptography.Rsa.create ()) reader
     writer =
   let info = Info.of_string "" in
@@ -20,21 +15,13 @@ let make_secure_transport ?(private_key = Cryptography.Rsa.create ()) reader
         Deferred.Or_error.errorf
           "Did not receive public key from the server side"
   in
-  ignore other_side_public_key;
   let reader =
-    Pipe.map reader ~f:(fun str ->
-        let str = Cryptography.Rsa.decrypt private_key str in
-        printf "Received message of length (%d): %s \n%!" (String.length str)
-          (string_to_ascii_codes str);
-        str)
+    Pipe.map reader ~f:(fun str -> Cryptography.Rsa.decrypt private_key str)
   in
   let writer =
     Pipe.create_writer (fun reader ->
         Pipe.transfer reader writer ~f:(fun str ->
-            printf "Sending message of length (%d): %s\n%!" (String.length str)
-              (string_to_ascii_codes str);
-            let str = Cryptography.Rsa.encrypt other_side_public_key str in
-            str))
+            Cryptography.Rsa.encrypt other_side_public_key str))
   in
   let%bind reader = Reader.of_pipe info reader in
   let%map writer, _ = Writer.of_pipe info writer in
