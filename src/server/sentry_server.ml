@@ -44,7 +44,10 @@ let get_password_entry_v1 t
     State.lookup_password state ~user ~hashed_master_password ~entry
     |> Deferred.return
   in
-  Cryptography.Aes.decrypt ~key:master_password ~data:encrypted_password
+  let result =
+    Cryptography.Aes.decrypt ~key:master_password ~data:encrypted_password
+  in
+  result
 
 let implementations =
   let implementations =
@@ -70,8 +73,9 @@ let start_command =
     in
     fun () ->
       let open Deferred.Let_syntax in
+      let private_key = Cryptography.Rsa.create () in
       let%bind _ =
-        Secure_connection.Server.create
+        Secure_connection.Server.create ~private_key
           ~where_to_listen:(Tcp.Where_to_listen.of_port port) (fun r w ->
             Rpc.Connection.server_with_close r w ~implementations
               ~connection_state:(fun (_ : Rpc.Connection.t) -> create ())

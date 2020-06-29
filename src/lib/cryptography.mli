@@ -11,7 +11,7 @@ module Aes : sig
 end
 
 module Rsa : sig
-  type 'a t
+  type 'a t [@@deriving sexp]
 
   module Public : sig
     type nonrec t = [ `Public ] t [@@deriving sexp, bin_io]

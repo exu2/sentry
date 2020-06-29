@@ -1,6 +1,11 @@
 open! Core
 open! Async
 
+let string_to_ascii_codes str =
+  String.to_list str
+  |> List.map ~f:(fun char -> Char.to_int char |> Int.to_string)
+  |> String.concat ~sep:"-"
+
 let make_secure_transport ?(private_key = Cryptography.Rsa.create ()) reader
     writer =
   let info = Info.of_string "" in
@@ -15,17 +20,21 @@ let make_secure_transport ?(private_key = Cryptography.Rsa.create ()) reader
         Deferred.Or_error.errorf
           "Did not receive public key from the server side"
   in
+  ignore other_side_public_key;
   let reader =
     Pipe.map reader ~f:(fun str ->
         let str = Cryptography.Rsa.decrypt private_key str in
+        printf "Received message of length (%d): %s \n%!" (String.length str)
+          (string_to_ascii_codes str);
         str)
   in
   let writer =
-    let r, w = Pipe.create () in
-    don't_wait_for
-      (Pipe.transfer r writer ~f:(fun str ->
-           Cryptography.Rsa.encrypt other_side_public_key str));
-    w
+    Pipe.create_writer (fun reader ->
+        Pipe.transfer reader writer ~f:(fun str ->
+            printf "Sending message of length (%d): %s\n%!" (String.length str)
+              (string_to_ascii_codes str);
+            let str = Cryptography.Rsa.encrypt other_side_public_key str in
+            str))
   in
   let%bind reader = Reader.of_pipe info reader in
   let%map writer, _ = Writer.of_pipe info writer in
@@ -74,13 +83,13 @@ let connect ~where_to_connect =
       Or_error.of_exn exn
 
 module Server = struct
-  let create ~where_to_listen f =
+  let create ?private_key ~where_to_listen f =
     let%bind _ =
       Tcp.Server.create ~on_handler_error:`Ignore where_to_listen (fun _ r w ->
           let reader = Reader.pipe r in
           let writer = Writer.pipe w in
           let%bind reader, writer =
-            make_secure_transport reader writer >>| ok_exn
+            make_secure_transport ?private_key reader writer >>| ok_exn
           in
           f reader writer)
     in

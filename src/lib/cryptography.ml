@@ -2,10 +2,12 @@ open! Core
 open! Async
 open! Import
 
-let pad ?(char = " ") string ~len =
+let pad_char = Char.of_int_exn 64
+
+let pad ?(char = pad_char) string ~len =
   let pad_string =
     List.map (List.range 0 (len - String.length string)) ~f:(fun _ -> char)
-    |> String.concat ~sep:""
+    |> String.of_char_list
   in
   String.concat ~sep:"" [ string; pad_string ]
 
@@ -21,7 +23,7 @@ module Aes = struct
       let next_fit_length = next_fit (String.length string) in
       match Int.equal (String.length string) next_fit_length with
       | true -> string
-      | false -> pad string ~len:next_fit_length
+      | false -> pad string ~char:' ' ~len:next_fit_length
     in
     let key = trim key in
     let data = trim data in
@@ -104,5 +106,6 @@ module Rsa = struct
   let encrypt t str = convert str ~f:(RSA.encrypt (to_rsa_key t))
 
   let decrypt t str =
-    convert str ~f:(RSA.decrypt (to_rsa_key t)) |> String.strip
+    convert str ~f:(RSA.decrypt (to_rsa_key t))
+    |> String.strip ~drop:(Char.equal pad_char)
 end
